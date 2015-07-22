@@ -6504,14 +6504,11 @@ Engine.createView = function( args ){
   var scene = renderer.getScene();
   var glowScene = renderer.getGlowScene();
 
-  //  z-up everything
   var space = new THREE.Group();
   scene.add( space );
-  space.rotation.x = Math.PI * 0.5;
 
   var glowSpace = new THREE.Group();
   glowScene.add( glowSpace );
-  glowSpace.rotation.x = Math.PI * 0.5;
 
 
   //  TODO
