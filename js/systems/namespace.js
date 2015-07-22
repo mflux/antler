@@ -1,16 +1,16 @@
-/* globals VIS */
+/* globals ANTLER */
 
 'use strict';
 
-VIS.System = {};
+ANTLER.System = {};
 
-VIS.System.setup = function( world ){
+ANTLER.System.setup = function( world ){
   var systems = {};
-  for( var i in VIS.System ){
+  for( var i in ANTLER.System ){
     if( i === 'setup' ){
       continue;
     }
-    var SystemType = VIS.System[ i ];
+    var SystemType = ANTLER.System[ i ];
     var system = new SystemType();
     world.addSystem( system );
     systems[ i ] = system;

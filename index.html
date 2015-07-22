@@ -6,13 +6,15 @@
 </head>
 <body>
 
-  <div id="render" class="render unselectable"></div>
-
-  <div id="interface" class="interface unselectable">
-  </div>
-
   <!-- vis.js built via gruntfile -->
   <script type="text/javascript" src="dist/vis.js"></script>
+  <script type="text/javascript">
+    var app = function( world, view, control, logic, ui, resources, urlArgs ){
+      var mesh = new THREE.Mesh( new THREE.BoxGeometry( 10,10,10 ), new THREE.MeshPhongMaterial() );
+      world.addView( mesh );
+    };
+    ANTLER.init( app );
+  </script>
 
 </body>
 </html>

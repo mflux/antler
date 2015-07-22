@@ -15,7 +15,15 @@ Engine.createView = function( args ){
   camera.position.normalize().multiplyScalar( 100 );
 
   var renderer = Engine.createRenderer( camera );
-  $( '#render' ).append( $( renderer.getDomElement() ) );
+  var $render = $( '#render' );
+  if( $render.length === 0 ){
+    $render = $('<div>')
+    .attr( 'id', 'render' )
+    .addClass( ' unselectable' )
+    .appendTo( $( document.body ) );
+  }
+
+  $render.append( $( renderer.getDomElement() ) );
 
   var scene = renderer.getScene();
   var glowScene = renderer.getGlowScene();

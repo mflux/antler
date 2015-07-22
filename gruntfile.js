@@ -64,9 +64,6 @@ module.exports = function(grunt) {
 //  VIS namespace
 'js/namespace.js',
 
-//  Interface
-'js/interface/namespace.js',
-
 //  Engine
 'js/engine/namespace.js',
 'js/engine/control.js',

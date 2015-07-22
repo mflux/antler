@@ -1,5 +1,5 @@
-/* globals VIS */
+/* globals ANTLER */
 
 'use strict';
 
-VIS.Component = {};
+ANTLER.Component = {};

@@ -1,8 +1,8 @@
-/* globals VIS, CES */
+/* globals ANTLER, CES */
 
 'use strict';
 
-VIS.createWorld = function( params ){
+ANTLER.createWorld = function( params ){
   var view = params.view;
 
   var that = new CES.World();

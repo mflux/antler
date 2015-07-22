@@ -1,4 +1,4 @@
-/* exported VIS */
+/* exported ANTLER */
 
 'use strict';
-var VIS = {};
+var ANTLER = {};

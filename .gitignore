@@ -19,6 +19,3 @@ $RECYCLE.BIN/
 
 # NPM
 node_modules
-
-# Distributable
-dist/

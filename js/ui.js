@@ -1,8 +1,8 @@
-/* globals VIS, EventEmitter */
+/* globals ANTLER, EventEmitter */
 
 'use strict';
 
-VIS.createUI = function(){
+ANTLER.createUI = function(){
   var that = {};
 
   var events = new EventEmitter();
