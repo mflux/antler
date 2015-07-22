@@ -1,86 +1,169 @@
-/* globals Engine, THREE, WAGNER */
+/* globals Engine, THREE, createAdditiveBlendShader, $ */
 
 'use strict';
 
-Engine.createRenderer = function( camera, scene ){
+Engine.createRenderer = function( camera ){
 
   var renderWidth = window.innerWidth;
   var renderHeight = window.innerHeight;
 
-  var renderer = new THREE.WebGLRenderer({
+  var deferredRenderer = new THREE.WebGLDeferredRenderer({
+    antialias: true,
+    tonemapping: THREE.FilmicOperator,
+    brightness: 1.0,
+    scale: 1.0,
+    width: renderWidth,
+    height: renderHeight
+  });
+
+  var forwardRenderer = deferredRenderer.renderer;
+
+
+
+  var depthShader = THREE.ShaderLib.depthRGBA;
+  var depthUniforms = THREE.UniformsUtils.clone( depthShader.uniforms );
+  var depthMaterial = new THREE.ShaderMaterial( { fragmentShader: depthShader.fragmentShader, vertexShader: depthShader.vertexShader, uniforms: depthUniforms } );
+  var depthTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, {
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter,
+    format: THREE.RGBAFormat,
     antialias: true
   });
 
-  renderer.setSize( renderWidth, renderHeight );
+  var ssao = new THREE.ShaderPass( THREE.SSAOShader );
+  ssao.uniforms.tDepth.value = depthTarget;
+  ssao.uniforms.size.value.set( window.innerWidth * 0.125, window.innerHeight * 0.125 );
+  ssao.uniforms.cameraNear.value = 0.5;
+  ssao.uniforms.cameraFar.value = 20.0;
+  ssao.uniforms.aoClamp.value = 0.7;
+  ssao.uniforms.lumInfluence.value = 0.1;
 
-  //  take care of window resizing
-
-
-
-
-  var effectParams = {
-    bloomEnabled     : true,
-    applyZoomBlur    : true,
-    blurAmount       : 0.18,
-    zoomBlurStrength : 0.26
-  };
-
-  WAGNER.vertexShadersPath   = 'js/vendor/Wagner/vertex-shaders';
-  WAGNER.fragmentShadersPath = 'js/vendor/Wagner/fragment-shaders';
-  WAGNER.assetsPath          = 'js/vendor/Wagner/assets/';
-
-  var composer = new WAGNER.Composer( renderer, {
-    useRGBA : false
-  });
-
-  composer.setSize( renderer.domElement.width, renderer.domElement.height );
+  deferredRenderer.addEffect( ssao );
 
 
-  var bloomPass = new WAGNER.MultiPassBloomPass();
-  bloomPass.params.blurAmount = 0.22;
-  bloomPass.params.applyZoomBlur = true;
-  bloomPass.params.zoomBlurStrength = 0.15;
+  var glowComposerPass = Engine.createGlowComposerPass( forwardRenderer, camera );
 
+  var bloomPass = new THREE.BloomPass( 0.50 );
+  var additivePass = Engine.createAdditivePass( glowComposerPass );
+  deferredRenderer.addEffect( bloomPass );
+  deferredRenderer.addEffect( additivePass );
 
+  var deferredScene = new THREE.Scene();
 
-  window.addEventListener( 'resize', function () {
-
-    camera.aspect = window.innerWidth / window.innerHeight;
+  $( window ).resize( function(){
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    deferredRenderer.setSize( w, h );
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    composer.setSize(renderer.domElement.width, renderer.domElement.height);
-
-  }, false );
-
-
-
-
-  function updatePostProcessing( zoomCenter ){
-    bloomPass.params.bloomEnabled     = effectParams.bloomEnabled;
-    bloomPass.params.applyZoomBlur    = effectParams.applyZoomBlur;
-    bloomPass.params.blurAmount       = effectParams.blurAmount;
-    bloomPass.params.zoomBlurStrength = effectParams.zoomBlurStrength;
-    bloomPass.params.zoomCenter       = zoomCenter;
-  }
+  });
 
 
 
   var that = {};
 
   that.getDomElement = function(){
-    return renderer.domElement;
+    return deferredRenderer.domElement;
   };
 
-  that.render = function( delta, zoomCenter ){
-    updatePostProcessing( zoomCenter );
-    composer.reset();
-    composer.render( scene, camera );
-    if( effectParams.bloomEnabled ){
-      composer.pass( bloomPass );
-    }
-    composer.toScreen();
+  that.render = function(){
+    deferredScene.overrideMaterial = depthMaterial;
+    forwardRenderer.render( deferredScene, camera, depthTarget, true );
+    deferredScene.overrideMaterial = null;
+
+    glowComposerPass.render();
+    forwardRenderer.clear();
+    deferredRenderer.render( deferredScene, camera );
+  };
+
+  that.getScene = function(){
+    return deferredScene;
+  };
+
+  that.getGlowScene = function(){
+    return glowComposerPass.scene;
+  };
+
+  that.getForwardRenderer = function(){
+    return forwardRenderer;
+  };
+
+  that.width = function(){
+    return forwardRenderer.context.canvas.width;
+  };
+
+  that.height = function(){
+    return forwardRenderer.context.canvas.height;
   };
 
   return that;
+};
+
+Engine.createGlowComposerPass = function( forwardRenderer, camera ){
+  var that = {};
+  var scene = new THREE.Scene();
+
+  var blurPasses = 4;
+  var blurPassArray = [];
+  for( var i=0; i<blurPasses; i++ ){
+    var hblur = new THREE.ShaderPass( THREE.HorizontalBlurShader );
+    var vblur = new THREE.ShaderPass( THREE.VerticalBlurShader );
+
+    var bluriness = 1 + i;
+
+    hblur.uniforms.h.value = bluriness / window.innerWidth;
+    vblur.uniforms.v.value = bluriness / window.innerHeight;
+    blurPassArray.push( hblur, vblur );
+  }
+
+  var renderPass = new THREE.RenderPass( scene, camera );
+  renderPass.clear = true;
+
+  var effectCopy = new THREE.ShaderPass( THREE.CopyShader );
+  effectCopy.renderToScreen = true;
+
+
+  var glowComposer = new THREE.EffectComposer( forwardRenderer );
+
+  glowComposer.addPass( renderPass );
+
+  blurPassArray.forEach( function( pass ){
+    glowComposer.addPass( pass );
+  });
+
+  glowComposer.addPass( effectCopy );
+
+  var emissiveComposer = new THREE.EffectComposer( forwardRenderer );
+  emissiveComposer.addPass( renderPass );
+  var fxaa = new THREE.ShaderPass( THREE.FXAAShader );
+  fxaa.uniforms.resolution.value = new THREE.Vector2( 1/window.innerWidth, 1/window.innerHeight );
+  emissiveComposer.addPass( fxaa );
+  emissiveComposer.addPass( effectCopy );
+
+  that.scene = scene;
+  that.render = function(){
+    glowComposer.render();
+    emissiveComposer.render();
+  };
+
+  that.getEmissiveRT = function(){
+    return emissiveComposer.renderTarget2;
+  };
+
+  that.getGlowRT = function(){
+    return glowComposer.renderTarget2;
+  };
+
+  return that;
+};
+
+Engine.createAdditivePass = function( glowComposerPass ){
+  var additiveBlendShader = createAdditiveBlendShader();
+  additiveBlendShader.uniforms.tGlow.value = glowComposerPass.getGlowRT();
+  additiveBlendShader.uniforms.tEmissive.value = glowComposerPass.getEmissiveRT();
+
+  var additivePass = new THREE.ShaderPass( additiveBlendShader );
+  additivePass.needsSwap = true;
+  additivePass.renderToScreen = false;
+  return additivePass;
 };

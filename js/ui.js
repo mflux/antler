@@ -1,4 +1,4 @@
-/* globals VIS, EventEmitter, Interface, $ */
+/* globals VIS, EventEmitter */
 
 'use strict';
 
@@ -9,10 +9,6 @@ VIS.createUI = function(){
   that.addListener = function( event, fn ){
     events.addListener( event, fn );
   };
-
-  $( '#homescreen' ).on( 'mousedown click', function( e ){
-    e.preventDefault();
-  });
 
   return that;
 };

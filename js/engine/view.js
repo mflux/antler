@@ -1,51 +1,125 @@
-/**
- * View
- *  takes in url arguments
- *  generates a scene, camera, and a renderer (see engine/renderer.js)
- *  establishes a draw loop on requestAnimationFrame
- *  outputs the following public functions
- *    getRenderer() - gets the three.js renderer itself
- *    getSpace() - gets the group which to add scene graph objects to
- *    getCamera() - gets the camera
- *    getDomElement() - gets the dom element from the renderer
- */
-
-/* globals Engine, THREE, $ */
+/* globals Engine, THREE, ObjectControls, $, THREEx, console */
 
 'use strict';
 
-Engine.createView = function( /* options */ ){
+Engine.createView = function( args ){
+  var that = {};
 
   var renderWidth = window.innerWidth;
   var renderHeight = window.innerHeight;
 
-  var camera = new THREE.PerspectiveCamera( 20, renderWidth/renderHeight, 0.25, 4000 );
-  camera.position.set( 1, 1, 1 );
-  // camera.position.normalize().multiplyScalar( 500 );
+  var camera = new THREE.PerspectiveCamera( 60, renderWidth/renderHeight, 0.1, 1000 );
 
-  var scene = new THREE.Scene();
-  scene.add( camera );
+  //  some default camera location
+  camera.position.set( 140, 130, 170 );
+  camera.position.normalize().multiplyScalar( 100 );
 
-  var renderer = Engine.createRenderer( camera, scene );
+  var renderer = Engine.createRenderer( camera );
   $( '#render' ).append( $( renderer.getDomElement() ) );
 
-  //  a group that's Z-Up, add everything to this
+  var scene = renderer.getScene();
+  var glowScene = renderer.getGlowScene();
+
+  //  z-up everything
   var space = new THREE.Group();
   scene.add( space );
   space.rotation.x = Math.PI * 0.5;
 
-  var zoomCenter = new THREE.Vector3();
+  var glowSpace = new THREE.Group();
+  glowScene.add( glowSpace );
+  glowSpace.rotation.x = Math.PI * 0.5;
 
-  var clock = new THREE.Clock( true );
 
-  function render( delta, zoomCenter ){
-    renderer.render( delta, zoomCenter );
+  //  TODO
+  //  place this elsewhere
+  Engine.createDefaultLights().forEach( function( light ){
+    scene.add( light );
+  });
+
+  //  TODO
+  //  rewrite light engine for culling
+  var lights = [];
+  var deferredLightCount = 4096;
+  ( function makeLights( count ){
+    do{
+      var light = new THREE.PointLight( 0xE0A075, 2.0, 2.0 );
+      // var light = new THREE.PointLight( 0x88aaff, 2.0, 2.0 );
+      light.visible = false;
+      light.enabled = false;
+      light.frustumCulled = true;
+      lights.push( light );
+      space.add( light );
+    }while( lights.length < count );
+  }( deferredLightCount ) );
+
+  that.setLight = function( idx, lightData ){
+    var light = lights[ idx ];
+    light.visible = true;
+    light.enabled = true;
+    light.position.set( lightData.x, lightData.y, lightData.z );
+    light.distance = lightData.distance;
+    light.intensity = lightData.intensity;
+    light.color.setHSL( lightData.h, lightData.s, lightData.l );
+  };
+
+  that.clearLights = function(){
+    lights.forEach( function( light ){
+      light.position.set( 0,0,0 );
+      light.visible = false;
+      light.enabled = false;
+    });
+  };
+
+  that.clearLightRange = function( start, count ){
+    var end = start + count;
+    for( var i=start; i<end; i++ ){
+      var light = lights[ i ];
+      light.position.set( 0,0,0 );
+      light.visible = false;
+      light.enabled = false;
+    }
+  };
+
+  var groupIdx = 0;
+  that.registerLightGroup = function( count ){
+    var current = groupIdx;
+    groupIdx += count;
+    if( groupIdx > deferredLightCount ){
+      console.warn( 'out of lights to register group' );
+      return 0;
+    }
+    return current;
+  };
+
+  var objectControls = new ObjectControls( camera );
+
+  var allowObjectControls = true;
+
+  objectControls.objectIntersected = function(){
+    if( this.intersected && allowObjectControls ){
+      var intersection = this.getIntersectionPoint( this.intersected );
+      if( this.intersected.hoverMove ){
+        var e = {
+          intersectionPoint: intersection
+        };
+        this.intersected.hoverMove( e );
+      }
+    }
+  };
+
+  function render(){
+    renderer.render();
   }
 
-  (function drawLoop()
-  {
+  THREEx.WindowResize( renderer.getForwardRenderer(), camera );
 
-    var delta = clock.getDelta();
+  (function drawLoop( nowMsec )
+  {
+    if( allowObjectControls ){
+      objectControls.update();
+    }
+
+    render( nowMsec );
 
     scene.traverse( function( o ){
       if( o.update ){
@@ -53,21 +127,25 @@ Engine.createView = function( /* options */ ){
           o.update( camera );
         }
         else{
-          o.update( delta, camera );
+          o.update();
         }
       }
     });
 
-    render( delta, zoomCenter );
+    glowScene.traverse( function( o ){
+      if( o.update ){
+        if( o instanceof THREE.LOD ){
+          o.update( camera );
+        }
+        else{
+          o.update();
+        }
+      }
+    });
 
     requestAnimationFrame( drawLoop );
 
   })( Date.now() );
-
-
-  //  public accessors...
-
-  var that = {};
 
   that.getRenderer = function(){
     return renderer;
@@ -77,8 +155,8 @@ Engine.createView = function( /* options */ ){
     return space;
   };
 
-  that.getScene = function(){
-    return scene;
+  that.getGlowSpace = function(){
+    return glowSpace;
   };
 
   that.getCamera = function(){
@@ -89,14 +167,29 @@ Engine.createView = function( /* options */ ){
     return renderer.getDomElement();
   };
 
-  that.setZoomCenter = function( zc ){
-    zoomCenter.copy( zc );
-  };
-
-  that.setFov = function( fov ){
-    camera.fov = fov;
-    camera.updateProjectionMatrix();
-  };
-
   return that;
+};
+
+Engine.createDefaultLights = function(){
+  var lights = [];
+
+  var light = new THREE.PointLight( 0xbbbbee, 7, 500 );
+  light.position.x = 40;
+  light.position.y = 70;
+  light.position.z = 300;
+  lights.push( light );
+
+  var light2 = new THREE.PointLight( 0x4477cc, 7, 500 );
+  light2.position.x = -140;
+  light2.position.y = -20;
+  light2.position.z = 170;
+  lights.push( light2 );
+
+  var light3 = new THREE.PointLight( 0xaaaaee, 5, 700 );
+  light3.position.x = -140;
+  light3.position.y = 160;
+  light3.position.z = -200;
+  lights.push( light3 );
+
+  return lights;
 };
