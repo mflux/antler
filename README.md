@@ -1,7 +1,7 @@
 ANTLER
 ========
 
-A non-framework, non-library. Use as-is, consult your spirit animal as necessary.
+A non-framework, non-library for fast prototyping THREE.js-based creative code projects.
 
 ## Usage
 
