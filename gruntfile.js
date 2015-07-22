@@ -61,7 +61,7 @@ module.exports = function(grunt) {
 'js/tools/gup.js',
 'js/tools/resource.js',
 
-//  VIS namespace
+//  ANTLER namespace
 'js/namespace.js',
 
 //  Engine
