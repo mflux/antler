@@ -12,7 +12,7 @@ A non-framework, non-library. Use as-is, consult your spirit animal as necessary
 * [THREE.js](https://github.com/mrdoob/three.js/) by MrDoob
 * [Stats.js](https://github.com/mrdoob/three.js/) by MrDoob
 * [THREEX](http://www.threejsgames.com/extensions/) by Jerome Etienne
-* [Wagner](https://github.com/spite/Wagner) by Jaume Sanchez Elias (All shaders are copyright of their respective authors)
+* [Object Controls](https://github.com/cabbibo/ObjectControls) by Isaac Cohen
 * [CES.js](https://github.com/qiao/ces.js) by Xueqiao Xu
 * Event Emitter by Oliver Caldwell
 * JQuery

@@ -10,27 +10,52 @@ module.exports = function(grunt) {
       options: {
         // define a string to put between each file in the concatenated output
         separator: '\n',
-        sourceMap: true
+        sourceMap: false
       },
       dist: {
         // the files to concatenate
         src: [
 
-//  Vendor
-'js/vendor/dat.gui.min.js',
-'js/vendor/EventEmitter.min.js',
-'js/vendor/signal.js',
-'js/vendor/jquery-1.11.2.min.js',
+'js/vendor/jquery.min.js',
 'js/vendor/jquery.mousewheel.min.js',
-'js/vendor/three.min.js',
-'js/vendor/threexresize.js',
 'js/vendor/Stats.js',
+'js/vendor/EventEmitter.min.js',
+'js/vendor/Stats.js',
+
+//  Entity Component System
+'js/vendor/ces-browser.min.js',
+'js/vendor/signal.js',
+
+//  DATGui
+'js/vendor/dat.gui.min.js',
+
+//  THREE.js
+'js/vendor/three.min.js',
+
+//  THREE.js PostProcessing
+'js/vendor/postprocessing/additiveblend.js',
+'js/vendor/postprocessing/BloomPass.js',
+'js/vendor/postprocessing/BokehPass.js',
+'js/vendor/postprocessing/BokehShader.js',
+'js/vendor/postprocessing/ConvolutionShader.js',
+'js/vendor/postprocessing/CopyShader.js',
+'js/vendor/postprocessing/EffectComposer.js',
+'js/vendor/postprocessing/FXAAShader.js',
+'js/vendor/postprocessing/HorizontalBlurShader.js',
+'js/vendor/postprocessing/MaskPass.js',
+'js/vendor/postprocessing/RenderPass.js',
+'js/vendor/postprocessing/ShaderDeferred.js',
+'js/vendor/postprocessing/ShaderPass.js',
+'js/vendor/postprocessing/SSAOShader.js',
+'js/vendor/postprocessing/TexturePass.js',
+'js/vendor/postprocessing/VerticalBlurShader.js',
+'js/vendor/postprocessing/WebGLDeferredRenderer.js',
+
+//  THREE extensions
+'js/vendor/ObjectControls.js',
 'js/vendor/OrbitControls.js',
 'js/vendor/OBJLoader.js',
-'js/vendor/seedrandom.min.js',
-'js/vendor/ces-browser.min.js',
-'js/vendor/Wagner/Wagner.js',
-'js/vendor/Wagner/Wagner.base.js',
+'js/vendor/threex.resize.js',
 
 //  Tools
 'js/tools/gup.js',
@@ -59,6 +84,7 @@ module.exports = function(grunt) {
 //  Client / Content
 'js/ui.js',
 'js/world.js',
+'js/app.js',
 'js/main.js'
 
         ],
