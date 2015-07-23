@@ -6619,6 +6619,7 @@ Engine.createView = function( args ){
     light.distance = lightData.distance;
     light.intensity = lightData.intensity;
     light.color.setHSL( lightData.h, lightData.s, lightData.l );
+    return light;
   };
 
   that.clearLights = function(){
