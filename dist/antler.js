@@ -6424,7 +6424,7 @@ Engine.createRenderer = function( camera ){
   ssao.uniforms.aoClamp.value = 0.7;
   ssao.uniforms.lumInfluence.value = 0.1;
 
-  deferredRenderer.addEffect( ssao );
+  // deferredRenderer.addEffect( ssao );
 
 
   var glowComposerPass = Engine.createGlowComposerPass( forwardRenderer, camera );
