@@ -68,6 +68,7 @@ module.exports = function(grunt) {
 //  Engine
 'js/engine/namespace.js',
 'js/engine/control.js',
+'js/engine/lights.js',
 'js/engine/logic.js',
 'js/engine/renderer.js',
 'js/engine/view.js',
