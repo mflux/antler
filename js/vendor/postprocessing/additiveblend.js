@@ -33,7 +33,7 @@ var createAdditiveBlendShader = function(){
         'vec4 texel = texture2D( tDiffuse, vUv );',
         'vec4 glow = texture2D( tGlow, vUv );',
         'vec4 emissive = texture2D( tEmissive, vUv );',
-        'gl_FragColor = texel + emissive + vec4(1.0, 0.75, 0.5, 1.0) * glow * 2.0;',
+        'gl_FragColor = texel + emissive + vec4(1.0, 1.0, 1.0, 1.0) * glow * 2.0;',
       '}'
     ].join('\n')
   };
