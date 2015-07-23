@@ -58,6 +58,7 @@ module.exports = function(grunt) {
 'js/vendor/threex.resize.js',
 
 //  Tools
+'js/tools/coordinates.js',
 'js/tools/gup.js',
 'js/tools/resource.js',
 
