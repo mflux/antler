@@ -13,11 +13,12 @@ Engine.createLightSystem = function( view, options ){
   }
 
   function addLight( p ){
-    view.setLight( startIdx + lightIdx, p );
+    var light = view.setLight( startIdx + lightIdx, p );
     lightIdx++;
     if( lightIdx >= count ){
       lightIdx = 0;
     }
+    return light;
   }
 
   function addMultiple( lights ){
