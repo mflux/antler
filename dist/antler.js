@@ -6838,15 +6838,18 @@ ANTLER.createApp = function( world, view, control, logic, ui, resources, urlArgs
 
 'use strict';
 
-ANTLER.init = function( app, resourceList ){
-
+ANTLER.init = function( opts ){
+  var resourceList = opts.resourceList;
   if( resourceList === undefined ){
     resourceList = [];
   }
 
+  var app = opts.app;
   if( app === undefined ){
     app = ANTLER.sampleApp;
   }
+
+  var renderSettings = opts.renderSettings;
 
   $( document ).ready( function(){
     setup({
@@ -6858,7 +6861,7 @@ ANTLER.init = function( app, resourceList ){
 
     function main( resources ){
       var logic = Engine.createLogic();
-      var view = Engine.createView( urlArgs );
+      var view = Engine.createView( renderSettings );
       var control = Engine.createControl( view, logic );
 
       var ui = ANTLER.createUI();
