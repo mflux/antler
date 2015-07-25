@@ -2,7 +2,7 @@
 
 'use strict';
 
-Engine.createView = function( args ){
+Engine.createView = function( options ){
   var that = {};
 
   var renderWidth = window.innerWidth;
@@ -14,7 +14,17 @@ Engine.createView = function( args ){
   camera.position.set( 140, 130, 170 );
   camera.position.normalize().multiplyScalar( 100 );
 
-  var renderer = Engine.createRenderer( camera );
+  var rendererOptions = {
+    brightness: 1.0,
+    bloom: 0.5,
+    glowBlur: 1.0
+  };
+
+  if( options ){
+    rendererOptions = options;
+  }
+
+  var renderer = Engine.createRenderer( camera, rendererOptions );
   var $render = $( '#render' );
   if( $render.length === 0 ){
     $render = $('<div>')
@@ -37,9 +47,9 @@ Engine.createView = function( args ){
 
   //  TODO
   //  place this elsewhere
-  Engine.createDefaultLights().forEach( function( light ){
-    scene.add( light );
-  });
+  // Engine.createDefaultLights().forEach( function( light ){
+  //   scene.add( light );
+  // });
 
   //  TODO
   //  rewrite light engine for culling

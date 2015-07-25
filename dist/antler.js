@@ -6388,7 +6388,7 @@ Engine.createLogic = function(){
 
 'use strict';
 
-Engine.createRenderer = function( camera ){
+Engine.createRenderer = function( camera, options ){
 
   var renderWidth = window.innerWidth;
   var renderHeight = window.innerHeight;
@@ -6396,7 +6396,7 @@ Engine.createRenderer = function( camera ){
   var deferredRenderer = new THREE.WebGLDeferredRenderer({
     antialias: true,
     tonemapping: THREE.FilmicOperator,
-    brightness: 1.0,
+    brightness: options.brightness,
     scale: 1.0,
     width: renderWidth,
     height: renderHeight
@@ -6427,9 +6427,9 @@ Engine.createRenderer = function( camera ){
   // deferredRenderer.addEffect( ssao );
 
 
-  var glowComposerPass = Engine.createGlowComposerPass( forwardRenderer, camera );
+  var glowComposerPass = Engine.createGlowComposerPass( forwardRenderer, camera, options.glowBlur );
 
-  var bloomPass = new THREE.BloomPass( 0.50 );
+  var bloomPass = new THREE.BloomPass( options.bloom );
   var additivePass = Engine.createAdditivePass( glowComposerPass );
   deferredRenderer.addEffect( bloomPass );
   deferredRenderer.addEffect( additivePass );
@@ -6485,7 +6485,7 @@ Engine.createRenderer = function( camera ){
   return that;
 };
 
-Engine.createGlowComposerPass = function( forwardRenderer, camera ){
+Engine.createGlowComposerPass = function( forwardRenderer, camera, blurAmount ){
   var that = {};
   var scene = new THREE.Scene();
 
@@ -6495,7 +6495,7 @@ Engine.createGlowComposerPass = function( forwardRenderer, camera ){
     var hblur = new THREE.ShaderPass( THREE.HorizontalBlurShader );
     var vblur = new THREE.ShaderPass( THREE.VerticalBlurShader );
 
-    var bluriness = 1 + i;
+    var bluriness = 1 + ( i * blurAmount );
 
     hblur.uniforms.h.value = bluriness / window.innerWidth;
     vblur.uniforms.v.value = bluriness / window.innerHeight;
@@ -6557,7 +6557,7 @@ Engine.createAdditivePass = function( glowComposerPass ){
 
 'use strict';
 
-Engine.createView = function( args ){
+Engine.createView = function( options ){
   var that = {};
 
   var renderWidth = window.innerWidth;
@@ -6569,7 +6569,17 @@ Engine.createView = function( args ){
   camera.position.set( 140, 130, 170 );
   camera.position.normalize().multiplyScalar( 100 );
 
-  var renderer = Engine.createRenderer( camera );
+  var rendererOptions = {
+    brightness: 1.0,
+    bloom: 0.5,
+    glowBlur: 1.0
+  };
+
+  if( options ){
+    rendererOptions = options;
+  }
+
+  var renderer = Engine.createRenderer( camera, rendererOptions );
   var $render = $( '#render' );
   if( $render.length === 0 ){
     $render = $('<div>')
@@ -6592,9 +6602,9 @@ Engine.createView = function( args ){
 
   //  TODO
   //  place this elsewhere
-  Engine.createDefaultLights().forEach( function( light ){
-    scene.add( light );
-  });
+  // Engine.createDefaultLights().forEach( function( light ){
+  //   scene.add( light );
+  // });
 
   //  TODO
   //  rewrite light engine for culling
