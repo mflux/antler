@@ -82,11 +82,11 @@ var createViewControl = function( orbitControls, camera ){
   };
 
   that.getCameraLatLong = function(){
-    var lon = camera.rotation.x;
-    var lat = camera.rotation.y;
+    var cp = camera.position;
+    var location = Coordinates.XYZToSpherical( cp.x, cp.y, cp.z );
     return {
-      lat: lat,
-      lon: lon
+      lat: location.lat,
+      lon: location.lon
     };
   };
 
