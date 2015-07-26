@@ -61,6 +61,7 @@ module.exports = function(grunt) {
 'js/tools/coordinates.js',
 'js/tools/gup.js',
 'js/tools/resource.js',
+'js/tools/viewcontrols.js',
 
 //  ANTLER namespace
 'js/namespace.js',
