@@ -5081,12 +5081,6 @@ ObjectControls.prototype.touchMove= function(event){
 //    Orbit - left mouse / touch: one finger move
 //    Zoom - middle mouse, or mousewheel / touch: two finger spread or squish
 //    Pan - right mouse, or arrow keys / touch: three finter swipe
-//
-// This is a drop-in replacement for (most) TrackballControls used in examples.
-// That is, include this js file and wherever you see:
-//    	controls = new THREE.TrackballControls( camera );
-//      controls.target.z = 150;
-// Simple substitute "OrbitControls" and the control should work as-is.
 
 THREE.OrbitControls = function ( object, domElement ) {
 
@@ -5110,9 +5104,13 @@ THREE.OrbitControls = function ( object, domElement ) {
 	this.noZoom = false;
 	this.zoomSpeed = 1.0;
 
-	// Limits to how far you can dolly in and out
+	// Limits to how far you can dolly in and out ( PerspectiveCamera only )
 	this.minDistance = 0;
 	this.maxDistance = Infinity;
+
+	// Limits to how far you can zoom in and out ( OrthographicCamera only )
+	this.minZoom = 0;
+	this.maxZoom = Infinity;
 
 	// Set to true to disable this control
 	this.noRotate = false;
@@ -5131,11 +5129,19 @@ THREE.OrbitControls = function ( object, domElement ) {
 	this.minPolarAngle = 0; // radians
 	this.maxPolarAngle = Math.PI; // radians
 
+	// How far you can orbit horizontally, upper and lower limits.
+	// If set, must be a sub-interval of the interval [ - Math.PI, Math.PI ].
+	this.minAzimuthAngle = - Infinity; // radians
+	this.maxAzimuthAngle = Infinity; // radians
+
 	// Set to true to disable use of the keys
 	this.noKeys = false;
 
 	// The four arrow keys
 	this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40 };
+
+	// Mouse buttons
+	this.mouseButtons = { ORBIT: THREE.MOUSE.LEFT, ZOOM: THREE.MOUSE.MIDDLE, PAN: THREE.MOUSE.RIGHT };
 
 	////////////
 	// internals
@@ -5159,6 +5165,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 	var dollyEnd = new THREE.Vector2();
 	var dollyDelta = new THREE.Vector2();
 
+	var theta;
+	var phi;
 	var phiDelta = 0;
 	var thetaDelta = 0;
 	var scale = 1;
@@ -5175,6 +5183,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	this.target0 = this.target.clone();
 	this.position0 = this.object.position.clone();
+	this.zoom0 = this.object.zoom;
 
 	// so camera.up is the orbit axis
 
@@ -5184,8 +5193,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 	// events
 
 	var changeEvent = { type: 'change' };
-	var startEvent = { type: 'start'};
-	var endEvent = { type: 'end'};
+	var startEvent = { type: 'start' };
+	var endEvent = { type: 'end' };
 
 	this.rotateLeft = function ( angle ) {
 
@@ -5243,7 +5252,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
-		if ( scope.object.fov !== undefined ) {
+		if ( scope.object instanceof THREE.PerspectiveCamera ) {
 
 			// perspective
 			var position = scope.object.position;
@@ -5257,7 +5266,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 			scope.panLeft( 2 * deltaX * targetDistance / element.clientHeight );
 			scope.panUp( 2 * deltaY * targetDistance / element.clientHeight );
 
-		} else if ( scope.object.top !== undefined ) {
+		} else if ( scope.object instanceof THREE.OrthographicCamera ) {
 
 			// orthographic
 			scope.panLeft( deltaX * (scope.object.right - scope.object.left) / element.clientWidth );
@@ -5280,7 +5289,21 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		}
 
-		scale /= dollyScale;
+		if ( scope.object instanceof THREE.PerspectiveCamera ) {
+
+			scale /= dollyScale;
+
+		} else if ( scope.object instanceof THREE.OrthographicCamera ) {
+
+			scope.object.zoom = Math.max( this.minZoom, Math.min( this.maxZoom, this.object.zoom * dollyScale ) );
+			scope.object.updateProjectionMatrix();
+			scope.dispatchEvent( changeEvent );
+
+		} else {
+
+			console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
+
+		}
 
 	};
 
@@ -5292,7 +5315,21 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		}
 
-		scale *= dollyScale;
+		if ( scope.object instanceof THREE.PerspectiveCamera ) {
+
+			scale *= dollyScale;
+
+		} else if ( scope.object instanceof THREE.OrthographicCamera ) {
+
+			scope.object.zoom = Math.max( this.minZoom, Math.min( this.maxZoom, this.object.zoom / dollyScale ) );
+			scope.object.updateProjectionMatrix();
+			scope.dispatchEvent( changeEvent );
+
+		} else {
+
+			console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
+
+		}
 
 	};
 
@@ -5307,13 +5344,13 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		// angle from z-axis around y-axis
 
-		var theta = Math.atan2( offset.x, offset.z );
+		theta = Math.atan2( offset.x, offset.z );
 
 		// angle from y-axis
 
-		var phi = Math.atan2( Math.sqrt( offset.x * offset.x + offset.z * offset.z ), offset.y );
+		phi = Math.atan2( Math.sqrt( offset.x * offset.x + offset.z * offset.z ), offset.y );
 
-		if ( this.autoRotate ) {
+		if ( this.autoRotate && state === STATE.NONE ) {
 
 			this.rotateLeft( getAutoRotationAngle() );
 
@@ -5321,6 +5358,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		theta += thetaDelta;
 		phi += phiDelta;
+
+		// restrict theta to be between desired limits
+		theta = Math.max( this.minAzimuthAngle, Math.min( this.maxAzimuthAngle, theta ) );
 
 		// restrict phi to be between desired limits
 		phi = Math.max( this.minPolarAngle, Math.min( this.maxPolarAngle, phi ) );
@@ -5375,8 +5415,24 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		this.target.copy( this.target0 );
 		this.object.position.copy( this.position0 );
+		this.object.zoom = this.zoom0;
+
+		this.object.updateProjectionMatrix();
+		this.dispatchEvent( changeEvent );
 
 		this.update();
+
+	};
+
+	this.getPolarAngle = function () {
+
+		return phi;
+
+	};
+
+	this.getAzimuthalAngle = function () {
+
+		return theta
 
 	};
 
@@ -5397,21 +5453,21 @@ THREE.OrbitControls = function ( object, domElement ) {
 		if ( scope.enabled === false ) return;
 		event.preventDefault();
 
-		if ( event.button === 0 ) {
+		if ( event.button === scope.mouseButtons.ORBIT ) {
 			if ( scope.noRotate === true ) return;
 
 			state = STATE.ROTATE;
 
 			rotateStart.set( event.clientX, event.clientY );
 
-		} else if ( event.button === 1 ) {
+		} else if ( event.button === scope.mouseButtons.ZOOM ) {
 			if ( scope.noZoom === true ) return;
 
 			state = STATE.DOLLY;
 
 			dollyStart.set( event.clientX, event.clientY );
 
-		} else if ( event.button === 2 ) {
+		} else if ( event.button === scope.mouseButtons.PAN ) {
 			if ( scope.noPan === true ) return;
 
 			state = STATE.PAN;
@@ -5420,9 +5476,11 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		}
 
-		document.addEventListener( 'mousemove', onMouseMove, false );
-		document.addEventListener( 'mouseup', onMouseUp, false );
-		scope.dispatchEvent( startEvent );
+		if ( state !== STATE.NONE ) {
+			document.addEventListener( 'mousemove', onMouseMove, false );
+			document.addEventListener( 'mouseup', onMouseUp, false );
+			scope.dispatchEvent( startEvent );
+		}
 
 	}
 
@@ -5460,7 +5518,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 				scope.dollyIn();
 
-			} else {
+			} else if ( dollyDelta.y < 0 ) {
 
 				scope.dollyOut();
 
@@ -5481,7 +5539,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		}
 
-		scope.update();
+		if ( state !== STATE.NONE ) scope.update();
 
 	}
 
@@ -5498,7 +5556,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 	function onMouseWheel( event ) {
 
-		if ( scope.enabled === false || scope.noZoom === true ) return;
+		if ( scope.enabled === false || scope.noZoom === true || state !== STATE.NONE ) return;
 
 		event.preventDefault();
 		event.stopPropagation();
@@ -5519,7 +5577,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 			scope.dollyOut();
 
-		} else {
+		} else if ( delta < 0 ) {
 
 			scope.dollyIn();
 
@@ -5603,7 +5661,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		}
 
-		scope.dispatchEvent( startEvent );
+		if ( state !== STATE.NONE ) scope.dispatchEvent( startEvent );
 
 	}
 
@@ -5652,7 +5710,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 					scope.dollyOut();
 
-				} else {
+				} else if ( dollyDelta.y < 0 ) {
 
 					scope.dollyIn();
 
@@ -5712,6 +5770,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 };
 
 THREE.OrbitControls.prototype = Object.create( THREE.EventDispatcher.prototype );
+THREE.OrbitControls.prototype.constructor = THREE.OrbitControls;
+
 /**
  * @author mrdoob / http://mrdoob.com/
  */
