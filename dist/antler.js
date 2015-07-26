@@ -6164,8 +6164,8 @@ var Coordinates = (function(){
 
     XYZToSpherical: function( x, y, z ){
       var r = Math.sqrt( x * x + y * y + z * z );
-      var lat = Coordinates.radToDeg( Math.asin( z / r ) );
-      var lon = Coordinates.radToDeg( Math.atan2( y, x ) );
+      var lat = Coordinates.radToDeg( Math.asin( y / r ) );
+      var lon = Coordinates.radToDeg( Math.atan2( z, x ) );
       return {
         lat: lat,
         lon: lon
