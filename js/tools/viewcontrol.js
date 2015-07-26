@@ -28,22 +28,22 @@ var createViewControl = function( orbitControls, camera ){
     .start();
   }
 
-  function rotateTo( lat, long, duration ) {
+  function rotateTo( lat, lon, duration ) {
     var curPhi, curTheta, ll, thetaDiff;
     var cameraDistance = camera.position.length();
-    ll = Coordinates.toSpherical(lat, long, cameraDistance );
+    ll = Coordinates.toSpherical(lat, lon, cameraDistance );
     lat = ll.lat;
-    long = ll.long - ( Math.PI * 0.5 );
+    lon = ll.lon - ( Math.PI * 0.5 );
     curPhi = orbitControls.getPolarAngle();
     curTheta = -orbitControls.getAzimuthalAngle();
-    thetaDiff = long - curTheta;
+    thetaDiff = lon - curTheta;
     while (thetaDiff > Math.PI) {
       thetaDiff -= Math.PI * 2;
     }
     while (thetaDiff < -Math.PI) {
       thetaDiff += Math.PI * 2;
     }
-    long = curTheta + thetaDiff;
+    lon = curTheta + thetaDiff;
 
     var center = new THREE.Vector3();
 
@@ -53,7 +53,7 @@ var createViewControl = function( orbitControls, camera ){
     })
     .to({
       phi: lat,
-      theta: long
+      theta: lon
     }, duration )
     .easing( TWEEN.Easing.Quadratic.InOut )
     .onUpdate(function() {
@@ -62,7 +62,7 @@ var createViewControl = function( orbitControls, camera ){
       xyz = Coordinates.sphericalToXYZ({
         radius: cameraDistance,
         lat: this.phi,
-        long: this.theta
+        lon: this.theta
       });
       camera.position.set(xyz.x, xyz.y, xyz.z);
       camera.lookAt( center );
