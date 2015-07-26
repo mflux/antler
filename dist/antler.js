@@ -6134,7 +6134,7 @@ THREEx.WindowResize	= function(renderer, camera){
 
 'use strict';
 var Coordinates = (function(){
-  var toDeg = 180 * Math.PI;
+  var toDeg = 180 / Math.PI;
   var toRad = Math.PI / 180;
 
   return {
