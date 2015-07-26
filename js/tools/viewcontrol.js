@@ -81,7 +81,7 @@ var createViewControl = function( orbitControls, camera ){
     camera.updateProjectionMatrix();
   };
 
-  that.getCameraLatLong = function( camera ){
+  that.getCameraLatLong = function(){
     var lon = camera.rotation.x;
     var lat = camera.rotation.y;
     return {
