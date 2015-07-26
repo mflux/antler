@@ -6146,18 +6146,18 @@ var Coordinates = (function(){
       return rad * toDeg;
     },
 
-    toRadians: function( lat, long ){
+    toRadians: function( lat, lon ){
       return {
         lat: Coordinates.degToRad( -lat ) + Math.PI * 0.5,
-        long: Coordinates.degToRad( -long ) + Math.PI * 0.5
+        lon: Coordinates.degToRad( -lon ) + Math.PI * 0.5
       };
     },
 
-    toSpherical: function( lat, long, r ){
-      var ll = Coordinates.toRadians( lat, long );
+    toSpherical: function( lat, lon, r ){
+      var ll = Coordinates.toRadians( lat, lon );
       return {
         lat: ll.lat,
-        long: ll.long,
+        lon: ll.lon,
         radius: r
       };
     },
@@ -6174,18 +6174,18 @@ var Coordinates = (function(){
 
     sphericalToXYZ: function( spherical ){
       return {
-        x: spherical.radius * Math.cos(spherical.long) * Math.sin(spherical.lat),
+        x: spherical.radius * Math.cos(spherical.lon) * Math.sin(spherical.lat),
         y: spherical.radius * Math.cos(spherical.lat),
-        z: spherical.radius * Math.sin(spherical.long) * Math.sin(spherical.lat)
+        z: spherical.radius * Math.sin(spherical.lon) * Math.sin(spherical.lat)
       };
     },
 
-    latLonToXYZ: function( lat, long, radius ){
-      return Coordinates.sphericalToXYZ( Coordinates.toSpherical( lat, long, radius ) );
+    latLonToXYZ: function( lat, lon, radius ){
+      return Coordinates.sphericalToXYZ( Coordinates.toSpherical( lat, lon, radius ) );
     },
 
-    latLonToVector3: function( lat, long, radius ){
-      var xyz = Coordinates.latLonToXYZ( lat, long, radius );
+    latLonToVector3: function( lat, lon, radius ){
+      var xyz = Coordinates.latLonToXYZ( lat, lon, radius );
       return new THREE.Vector3( xyz.x, xyz.y, xyz.z );
     }
   };
