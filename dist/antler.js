@@ -6440,8 +6440,8 @@ var createViewControl = function( orbitControls, camera ){
       animState.theta = current.theta;
 
       var goal = calcGoal( lat, lon, current, cameraDistance );
-      animGoal.phi = goal.phi;
-      animGoal.theta = goal.theta;
+      animGoal.phi = '+' + ( goal.phi - current.phi );
+      animGoal.theta = '+' + ( goal.theta - current.theta );
     })
     .to( animGoal, duration )
     .easing( TWEEN.Easing.Quadratic.InOut )
