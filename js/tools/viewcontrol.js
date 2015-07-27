@@ -28,68 +28,37 @@ var createViewControl = function( orbitControls, camera ){
     .start();
   }
 
-  function calcState(){
-    var curPhi = orbitControls.getPolarAngle();
-    var curTheta = -orbitControls.getAzimuthalAngle();
-    return {
-      phi: curPhi,
-      theta: curTheta
-    };
-  }
+  function rotateTo( lat, lon, duration, autoStart ) {
+    if( autoStart === undefined ){
+      autoStart = true;
+    }
 
-  function calcGoal( lat, lon, current, distance ){
-    ll = Coordinates.toSpherical(lat, lon, distance );
+    var curPhi, curTheta, ll, thetaDiff;
+    var cameraDistance = camera.position.length();
+    ll = Coordinates.toSpherical(lat, lon, cameraDistance );
     lat = ll.lat;
     lon = ll.lon - ( Math.PI * 0.5 );
-
-    var ll, thetaDiff;
-
-
-    thetaDiff = lon - current.theta;
+    curPhi = orbitControls.getPolarAngle();
+    curTheta = -orbitControls.getAzimuthalAngle();
+    thetaDiff = lon - curTheta;
     while (thetaDiff > Math.PI) {
       thetaDiff -= Math.PI * 2;
     }
     while (thetaDiff < -Math.PI) {
       thetaDiff += Math.PI * 2;
     }
-    lon = current.theta + thetaDiff;
-    return {
-      phi: lat,
-      theta: lon
-    };
-  }
-
-  function rotateTo( lat, lon, duration, autoStart ) {
-    if( autoStart === undefined ){
-      autoStart = true;
-    }
-
-    var cameraDistance = camera.position.length();
+    lon = curTheta + thetaDiff;
 
     var center = new THREE.Vector3();
 
-    var current = calcState();
-    var animState = {
-      phi: current.phi,
-      theta: current.theta
-    };
-
-    var animGoal = {
-      phi: 0,
-      theta: 0
-    };
-
-    var tween = new TWEEN.Tween( animState )
-    .onStart( function(){
-      var current = calcState();
-      animState.phi = current.phi;
-      animState.theta = current.theta;
-
-      var goal = calcGoal( lat, lon, current, cameraDistance );
-      animGoal.phi = '+' + ( goal.phi - current.phi );
-      animGoal.theta = '+' + ( goal.theta - current.theta );
+    var tween = new TWEEN.Tween({
+      phi: curPhi,
+      theta: curTheta
     })
-    .to( animGoal, duration )
+    .to({
+      phi: lat,
+      theta: lon
+    }, duration )
     .easing( TWEEN.Easing.Quadratic.InOut )
     .onUpdate(function() {
       var xyz;
