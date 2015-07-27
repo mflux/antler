@@ -28,7 +28,11 @@ var createViewControl = function( orbitControls, camera ){
     .start();
   }
 
-  function rotateTo( lat, lon, duration ) {
+  function rotateTo( lat, lon, duration, autoStart ) {
+    if( autoStart === undefined ){
+      autoStart = true;
+    }
+
     var curPhi, curTheta, ll, thetaDiff;
     var cameraDistance = camera.position.length();
     ll = Coordinates.toSpherical(lat, lon, cameraDistance );
@@ -47,7 +51,7 @@ var createViewControl = function( orbitControls, camera ){
 
     var center = new THREE.Vector3();
 
-    return new TWEEN.Tween({
+    var tween = new TWEEN.Tween({
       phi: curPhi,
       theta: curTheta
     })
@@ -67,7 +71,13 @@ var createViewControl = function( orbitControls, camera ){
       camera.position.set(xyz.x, xyz.y, xyz.z);
       camera.lookAt( center );
       return orbitControls.update();
-    }).start();
+    });
+
+    if( autoStart ){
+      tween.start();
+    }
+
+    return tween;
   }
 
   var that = {};
