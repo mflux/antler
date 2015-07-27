@@ -6382,7 +6382,7 @@ var createViewControl = function( orbitControls, camera ){
     .start();
   }
 
-  function rotateTo( lat, lon, duration, autoStart ) {
+  function rotateTo( lat, lon, idealDist, duration, autoStart ) {
     if( autoStart === undefined ){
       autoStart = true;
     }
@@ -6407,18 +6407,20 @@ var createViewControl = function( orbitControls, camera ){
 
     var tween = new TWEEN.Tween({
       phi: curPhi,
-      theta: curTheta
+      theta: curTheta,
+      dist: cameraDistance
     })
     .to({
       phi: lat,
-      theta: lon
+      theta: lon,
+      dist: idealDist
     }, duration )
     .easing( TWEEN.Easing.Quadratic.InOut )
     .onUpdate(function() {
       var xyz;
       this.theta += Math.PI / 2;
       xyz = Coordinates.sphericalToXYZ({
-        radius: cameraDistance,
+        radius: this.dist,
         lat: this.phi,
         lon: this.theta
       });
@@ -6452,6 +6454,10 @@ var createViewControl = function( orbitControls, camera ){
       lat: location.lat,
       lon: location.lon
     };
+  };
+
+  that.getCameraDistance = function(){
+    return camera.position.length();
   };
 
   return that;
