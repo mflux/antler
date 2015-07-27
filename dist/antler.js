@@ -6415,7 +6415,7 @@ var createViewControl = function( orbitControls, camera ){
       theta: lon,
       dist: idealDist
     }, duration )
-    .easing( TWEEN.Easing.Quadratic.InOut )
+    .easing( TWEEN.Easing.Sinusoidal.InOut )
     .onUpdate(function() {
       var xyz;
       this.theta += Math.PI / 2;
