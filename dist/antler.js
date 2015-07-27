@@ -6422,9 +6422,10 @@ var createViewControl = function( orbitControls, camera ){
 
     var center = new THREE.Vector3();
 
+    var current = calcState();
     var animState = {
-      phi: 0,
-      theta: 0
+      phi: current.phi,
+      theta: current.theta
     };
 
     var animGoal = {
